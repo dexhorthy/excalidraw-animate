@@ -18,20 +18,34 @@ import { animateSvg } from "./animate";
 
 export const getNonDeletedElements = (
   elements: readonly ExcalidrawElement[]
-): NonDeletedExcalidrawElement[] =>
-  elements.filter(
-    (element): element is NonDeletedExcalidrawElement => !element.isDeleted
+): NonDeletedExcalidrawElement[] => {
+  console.log("Before filtering:", elements);
+  const filtered = elements.filter(
+    (element): element is NonDeletedExcalidrawElement => {
+      const keep = !element.isDeleted;
+      if (!keep) {
+        console.log("Filtered out element:", element);
+      }
+      return keep;
+    }
   );
+  console.log("After filtering:", filtered);
+  return filtered;
+};
 
 const importLibraryFromUrl = async (url: string) => {
   try {
     const request = await fetch(url);
     const blob = await request.blob();
+    console.log("Loaded blob:", blob);
     const libraryItems = await loadLibraryFromBlob(blob);
-    return libraryItems.map((libraryItem) =>
-      getNonDeletedElements(restoreElements(libraryItem.elements, null))
-    );
+    console.log("Library items:", libraryItems);
+    return libraryItems.map((libraryItem) => {
+      console.log("Processing library item:", libraryItem);
+      return getNonDeletedElements(restoreElements(libraryItem.elements, null));
+    });
   } catch (error) {
+    console.error("Error loading library:", error);
     window.alert("Unable to load library");
     return [];
   }
@@ -65,7 +79,10 @@ export const useLoadSvg = () => {
       };
       const svgList = await Promise.all(
         dataList.map(async (data) => {
+          console.log("Initial data in loadDataList:", data);
+          console.log("Raw elements before filtering:", data.elements);
           const elements = getNonDeletedElements(data.elements);
+          console.log("Elements after non-deleted filtering:", elements);
           const svg = await exportToSvg({
             elements,
             files: data.files,
@@ -74,11 +91,11 @@ export const useLoadSvg = () => {
           });
 
           // This is a patch up function to apply new fonts that are not part of Excalidraw package
-          // Remove this function once Excalidraw package is updated (v0.17.6 as of now)
           applyNewFontsToSvg(svg, elements);
 
           const result = animateSvg(svg, elements, options);
-          console.log(svg);
+          console.log("Elements:", elements);
+          console.log("SVG:", svg);
           if (inSequence) {
             options.startMs = result.finishedMs;
           }

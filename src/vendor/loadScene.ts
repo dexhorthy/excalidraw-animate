@@ -256,30 +256,30 @@ const importFromBackend = async (
 export const loadScene = async (
   id: string | null,
   privateKey: string | null,
-  // Supply local state even if importing from backend to ensure we restore
-  // localStorage user settings which we do not persist on server.
-  // Non-optional so we don't forget to pass it even if `undefined`.
   localDataState: ImportedDataState | undefined | null
 ) => {
   let data;
   if (id != null && privateKey != null) {
     // the private key is used to decrypt the content from the server, take
     // extra care not to leak it
+    const importedData = await importFromBackend(id, privateKey);
+    console.log("Imported data:", importedData);
     data = restore(
-      await importFromBackend(id, privateKey),
+      importedData,
       localDataState?.appState,
       localDataState?.elements
     );
   } else {
+    console.log("Loading from local data:", localDataState);
     data = restore(localDataState || null, null, null);
   }
+
+  console.log("Loaded scene data:", data);
+  console.log("Elements after restore:", data.elements);
 
   return {
     elements: data.elements,
     appState: data.appState,
-    // note: this will always be empty because we're not storing files
-    // in the scene database/localStorage, and instead fetch them async
-    // from a different database
     files: data.files,
     commitToHistory: false,
   };

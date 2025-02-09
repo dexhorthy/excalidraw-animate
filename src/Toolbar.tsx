@@ -20,7 +20,21 @@ const loadFromJSON = async () => {
   const blob = await fileOpen({
     description: "Excalidraw files",
   });
-  return loadFromBlob(blob, null, null);
+  console.log("Loaded file blob:", blob);
+  const text = await blob.text();
+  const fileData = JSON.parse(text);
+  console.log("Raw file data:", fileData);
+  
+  // Instead of using loadFromBlob, process the data directly
+  const elements = fileData.elements;
+  const appState = fileData.appState || {};
+  const files = fileData.files || {};
+  
+  return {
+    elements,
+    appState,
+    files
+  };
 };
 
 const linkRegex =

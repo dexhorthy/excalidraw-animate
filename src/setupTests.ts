@@ -15,3 +15,16 @@ document.body.appendChild(element);
     return crypto.randomFillSync(buffer);
   },
 };
+
+// Mock SVG elements and methods
+class SVGElementMock {
+  childNodes = [];
+  setAttribute() {}
+  appendChild() {}
+  ownerDocument = {
+    createElementNS: () => new SVGElementMock(),
+  };
+}
+
+global.SVGSVGElement = SVGElementMock as any;
+global.SVGElement = SVGElementMock as any;

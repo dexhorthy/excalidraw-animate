@@ -1,0 +1,16 @@
+# Project Knowledge
+
+## Package Management
+- Use `npx yarn` to run yarn commands when yarn is not installed globally
+- Project uses yarn as package manager, but is installed as a dependency
+
+## Project Structure
+- React application for animating Excalidraw drawings
+- Converts drawings to animated SVGs
+- Core animation logic in src/animate.ts
+- Loading/SVG handling in src/useLoadSvg.ts
+
+## Testing
+- Run tests with `npx yarn test`
+- Jest testing framework
+- Test files co-located with source files (*.test.ts)
