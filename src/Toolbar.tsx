@@ -24,16 +24,16 @@ const loadFromJSON = async () => {
   const text = await blob.text();
   const fileData = JSON.parse(text);
   console.log("Raw file data:", fileData);
-  
+
   // Instead of using loadFromBlob, process the data directly
   const elements = fileData.elements;
   const appState = fileData.appState || {};
   const files = fileData.files || {};
-  
+
   return {
     elements,
     appState,
-    files
+    files,
   };
 };
 

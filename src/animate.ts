@@ -2,10 +2,10 @@ import type {
   NonDeletedExcalidrawElement,
   NonDeleted,
   ExcalidrawFreeDrawElement,
-  ExcalidrawElement,
 } from "@excalidraw/excalidraw/types/element/types";
 
 import { getFreeDrawSvgPath } from "@excalidraw/excalidraw";
+import { detectFrames, animateFrames } from "./frames";
 
 type AnimateOptions = {
   startMs?: number;
@@ -603,11 +603,6 @@ interface FrameElement {
   frameId?: string;
 }
 
-interface ElementWithFrame {
-  id: string;
-  frameId?: string;
-}
-
 const createGroups = (
   svg: SVGSVGElement,
   elements: readonly NonDeletedExcalidrawElement[]
@@ -629,9 +624,13 @@ const createGroups = (
   return groups;
 };
 
-const filterGroupNodes = (nodes: NodeListOf<SVGElement>) =>
+export const filterGroupNodes = (nodes: NodeListOf<SVGElement>) =>
   [...nodes].filter(
-    (node) => node.tagName === "g" || node.tagName === "use" || node.tagName === "path" || node.tagName === "text"
+    (node) =>
+      node.tagName === "g" ||
+      node.tagName === "use" ||
+      node.tagName === "path" ||
+      node.tagName === "text"
   );
 
 const extractNumberFromElement = (
@@ -654,151 +653,11 @@ const sortSvgNodes = (
     return aOrder - bOrder;
   });
 
-const animateFrames = (
-  svg: SVGSVGElement,
-  elements: readonly NonDeletedExcalidrawElement[],
-  options: AnimateOptions
-): { finishedMs: number } => {
-  const SVG_NS = "http://www.w3.org/2000/svg";
-  const startMs = options.startMs ?? 1000;
-  const frameDuration = 4000;
-  const extraMargin = 1000;
-
-  const groupsByFrame = new Map<string, number[]>();
-  const orders = new Map<string, number>();
-  const elementToNodeIndex = new Map<number, number>();
-  let nodeIndex = 0;
-  
-  // First pass: collect frame elements to get proper ordering
-  for (let i = 0; i < elements.length; i++) {
-    const e = elements[i] as any;
-    if (e.type === "frame") {
-      console.log("Found frame:", e);
-      if (!groupsByFrame.has(e.id)) {
-        groupsByFrame.set(e.id, []);
-        orders.set(e.id, i);
-      }
-    } else {
-      // Map non-frame elements to SVG node indices
-      elementToNodeIndex.set(i, nodeIndex++);
-    }
-  }
-
-  console.log("Frame groups after first pass:", groupsByFrame);
-
-  // Second pass: assign elements to frames
-  for (let i = 0; i < elements.length; i++) {
-    const e = elements[i] as any;
-    if (e.type !== "frame") {  // Skip frame elements themselves
-      let frameKey: string;
-      if (e.frameId != null && e.frameId !== "") {
-        frameKey = e.frameId;
-        console.log("Found element in frame:", e, "frameKey:", frameKey);
-      } else {
-        frameKey = "default";
-      }
-      if (!groupsByFrame.has(frameKey)) {
-        groupsByFrame.set(frameKey, []);
-        orders.set(frameKey, Number.MAX_SAFE_INTEGER);
-      }
-      groupsByFrame.get(frameKey)?.push(i);
-    }
-  }
-
-  console.log("Final frame groups:", groupsByFrame);
-  console.log("Frame orders:", orders);
-
-  // Get the list of SVG nodes
-  const allNodes = Array.from(
-    filterGroupNodes(svg.childNodes as NodeListOf<SVGElement>)
-  );
-  console.log("SVG nodes:", allNodes.map(n => n.tagName));
-  console.log("Elements:", elements);
-  
-  let current = startMs;
-  
-  // Sort frames by their order of appearance
-  const frameGroups = Array.from(groupsByFrame.entries()).sort(
-    (a, b) => (orders.get(a[0]) ?? 0) - (orders.get(b[0]) ?? 0)
-  );
-
-  console.log("Sorted frame groups:", frameGroups);
-
-  // Create frame groups and animate them
-  frameGroups.forEach(([groupKey, indices]) => {
-    console.log("Processing frame group:", groupKey, "indices:", indices);
-    
-    const wrapper = svg.ownerDocument.createElementNS(SVG_NS, "g");
-    wrapper.setAttribute("opacity", "0");
-    
-    // Move nodes into frame group
-    indices.forEach(elementIndex => {
-      const nodeIndex = elementToNodeIndex.get(elementIndex);
-      if (nodeIndex === undefined) {
-        console.log("No node index for element:", elementIndex);
-        return;
-      }
-      const node = allNodes[nodeIndex];
-      if (!node) {
-        console.log("No node found for index:", nodeIndex);
-        return;
-      }
-      if (node.parentNode) {
-        node.parentNode.removeChild(node);
-      }
-      wrapper.appendChild(node);
-    });
-
-    // Create fade animation
-    const animateOpacity = svg.ownerDocument.createElementNS(SVG_NS, "animate");
-    animateOpacity.setAttribute("attributeName", "opacity");
-    animateOpacity.setAttribute("values", "0;1;1;0");
-    animateOpacity.setAttribute("keyTimes", "0;0.1;0.9;1");
-    animateOpacity.setAttribute("dur", `${frameDuration}ms`);
-    animateOpacity.setAttribute("begin", `${current}ms`);
-    animateOpacity.setAttribute("fill", "freeze");
-    animateOpacity.setAttribute("calcMode", "spline");
-    animateOpacity.setAttribute(
-      "keySplines",
-      ".42,0,.58,1;0,0,1,1;.42,0,.58,1"
-    );
-    
-    wrapper.appendChild(animateOpacity);
-    svg.appendChild(wrapper);
-    
-    current += frameDuration;
-  });
-
-  return { finishedMs: current + extraMargin };
-};
-
-export const detectFrames = (
-  elements: readonly NonDeletedExcalidrawElement[]
-): boolean => {
-  console.log("Checking elements for frames:", elements.map(e => ({ id: e.id, type: e.type, frameId: (e as any).frameId })));
-  return elements.some((ele) => {
-    const element = ele as any;
-    const isFrame = element.type === "frame";
-    const hasFrameId = element.frameId != null && element.frameId !== "";
-    console.log(`Element ${element.id}: isFrame=${isFrame}, hasFrameId=${hasFrameId}, type=${element.type}`);
-    return isFrame || hasFrameId;
-  });
-};
-
 export const animateSvg = (
   svg: SVGSVGElement,
   elements: readonly NonDeletedExcalidrawElement[],
   options: AnimateOptions = {}
 ) => {
-  console.log("Detecting frames in elements", elements);
-  const framesPresent = detectFrames(elements);
-  console.log("Frames present:", framesPresent);
-
-  if (framesPresent) {
-    console.log("Animating frames");
-    return animateFrames(svg, elements, options);
-  }
-
   let finishedMs;
   const groups = createGroups(svg, elements);
   const finished = new Map();
@@ -891,3 +750,5 @@ export const getBeginTimeList = (svg: SVGSVGElement) => {
   });
   return beginTimeList;
 };
+
+export type { AnimateOptions };

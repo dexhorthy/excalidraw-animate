@@ -15,6 +15,8 @@ import type {
 
 import { loadScene } from "./vendor/loadScene";
 import { animateSvg } from "./animate";
+import { adjustElementPositions, animateFrames } from "./frames";
+import { detectFrames } from "./frames";
 
 export const getNonDeletedElements = (
   elements: readonly ExcalidrawElement[]
@@ -79,10 +81,12 @@ export const useLoadSvg = () => {
       };
       const svgList = await Promise.all(
         dataList.map(async (data) => {
-          console.log("Initial data in loadDataList:", data);
-          console.log("Raw elements before filtering:", data.elements);
-          const elements = getNonDeletedElements(data.elements);
-          console.log("Elements after non-deleted filtering:", elements);
+          let elements = getNonDeletedElements(data.elements);
+          // Adjust element positions if frames are present
+          if (detectFrames(elements)) {
+            const { adjustedElements } = adjustElementPositions(elements);
+            elements = adjustedElements;
+          }
           const svg = await exportToSvg({
             elements,
             files: data.files,
@@ -93,7 +97,14 @@ export const useLoadSvg = () => {
           // This is a patch up function to apply new fonts that are not part of Excalidraw package
           applyNewFontsToSvg(svg, elements);
 
-          const result = animateSvg(svg, elements, options);
+          let result;
+          if (detectFrames(elements)) {
+            console.log("Animating frames");
+            result = animateFrames(svg, elements, options);
+          } else {
+            console.log("Animating svg");
+            result = animateSvg(svg, elements, options);
+          }
           console.log("Elements:", elements);
           console.log("SVG:", svg);
           if (inSequence) {

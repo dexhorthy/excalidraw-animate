@@ -13,6 +13,7 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^14.0.0",
     "@types/dom-mediacapture-record": "^1.0.16",
+    "@types/jsdom": "^21.1.7",
     "@types/pako": "^2.0.0",
     "@types/react": "^18.2.4",
     "@types/react-dom": "^18.2.3",
@@ -33,11 +34,13 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "yarn run test:all",
-    "test:all": "yarn run test:type && yarn run test:lint && yarn run test:format && yarn run test:app --watchAll=false",
+    "test:all": "yarn run fmt && yarn run test:type && yarn run test:lint && yarn run test:format && yarn run test:app --watchAll=false",
+    "fmt": "prettier 'src/*.(js|ts|tsx|css|scss)' --write",
     "test:type": "tsc",
     "test:lint": "eslint --max-warnings=0 --ext .js,.ts,.tsx --ignore-pattern dist.",
     "test:format": "prettier 'src/*.(js|ts|tsx|css|scss)' --list-different",
     "test:app": "react-scripts test --passWithNoTests",
+    "test:app:nowatch": "react-scripts test --passWithNoTests --watchAll=false",
     "compile": "tsc -p tsconfig.build.json"
   },
   "eslintConfig": {
