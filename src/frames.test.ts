@@ -12,6 +12,8 @@ import type {
 import fs from "fs";
 import path from "path";
 import { JSDOM } from "jsdom";
+import { exportToSvg } from "@excalidraw/excalidraw";
+import { AppState } from "@excalidraw/excalidraw/types/types";
 
 // Set up JSDOM
 const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>");
@@ -398,6 +400,264 @@ describe("Frame Animation", () => {
     expect(firstFadeOut.getAttribute("begin")).toBe("2000ms");
 
     const secondGroup = groups[1];
+    const secondGroupAnimations = secondGroup.querySelectorAll("animate");
+    expect(secondGroupAnimations.length).toBe(1); // only fade-in for last frame
+
+    const secondFadeIn = secondGroupAnimations[0];
+    expect(secondFadeIn.getAttribute("attributeName")).toBe("opacity");
+    expect(secondFadeIn.getAttribute("from")).toBe("0");
+    expect(secondFadeIn.getAttribute("to")).toBe("1");
+    expect(secondFadeIn.getAttribute("dur")).toBe("500ms");
+    expect(secondFadeIn.getAttribute("begin")).toBe("2000ms");
+
+    expect(result.finishedMs).toBe(5000); // 2000ms per frame + 1000ms margin
+  });
+});
+
+describe("Frame Animation with Excalidraw Export", () => {
+  it("should animate frames from Excalidraw exported SVG", async () => {
+    // Create test elements similar to how they appear in the app
+    const elements: NonDeletedExcalidrawElement[] = [
+      {
+        id: "frame1",
+        type: "frame",
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 100,
+        angle: 0,
+        strokeColor: "#000000",
+        backgroundColor: "transparent",
+        fillStyle: "hachure",
+        strokeWidth: 1,
+        strokeStyle: "solid",
+        roughness: 1,
+        opacity: 100,
+        groupIds: [],
+        frameId: null,
+        roundness: null,
+        seed: 1,
+        version: 1,
+        versionNonce: 1,
+        isDeleted: false,
+        boundElements: null,
+        updated: 1,
+        link: null,
+        locked: false,
+      } as any,
+      {
+        id: "rect1",
+        type: "rectangle",
+        x: 20,
+        y: 20,
+        width: 160,
+        height: 60,
+        angle: 0,
+        strokeColor: "#000000",
+        backgroundColor: "#ffffff",
+        fillStyle: "solid",
+        strokeWidth: 2,
+        strokeStyle: "solid",
+        roughness: 1,
+        opacity: 100,
+        groupIds: [],
+        frameId: "frame1",
+        roundness: null,
+        seed: 1,
+        version: 1,
+        versionNonce: 1,
+        isDeleted: false,
+        boundElements: null,
+        updated: 1,
+        link: null,
+        locked: false,
+      } as any,
+      {
+        id: "text1",
+        type: "text",
+        x: 40,
+        y: 40,
+        width: 120,
+        height: 20,
+        angle: 0,
+        strokeColor: "#000000",
+        backgroundColor: "transparent",
+        fillStyle: "hachure",
+        strokeWidth: 1,
+        strokeStyle: "solid",
+        roughness: 1,
+        opacity: 100,
+        groupIds: [],
+        frameId: "frame1",
+        roundness: null,
+        seed: 1,
+        version: 1,
+        versionNonce: 1,
+        isDeleted: false,
+        boundElements: null,
+        updated: 1,
+        link: null,
+        locked: false,
+        fontSize: 20,
+        fontFamily: 1,
+        text: "Hello",
+        baseline: 17,
+        textAlign: "left",
+        verticalAlign: "top",
+      } as any,
+      {
+        id: "frame2",
+        type: "frame",
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 100,
+        angle: 0,
+        strokeColor: "#000000",
+        backgroundColor: "transparent",
+        fillStyle: "hachure",
+        strokeWidth: 1,
+        strokeStyle: "solid",
+        roughness: 1,
+        opacity: 100,
+        groupIds: [],
+        frameId: null,
+        roundness: null,
+        seed: 1,
+        version: 1,
+        versionNonce: 1,
+        isDeleted: false,
+        boundElements: null,
+        updated: 1,
+        link: null,
+        locked: false,
+      } as any,
+      {
+        id: "rect2",
+        type: "rectangle",
+        x: 20,
+        y: 20,
+        width: 160,
+        height: 60,
+        angle: 0,
+        strokeColor: "#000000",
+        backgroundColor: "#ffffff",
+        fillStyle: "solid",
+        strokeWidth: 2,
+        strokeStyle: "solid",
+        roughness: 1,
+        opacity: 100,
+        groupIds: [],
+        frameId: "frame2",
+        roundness: null,
+        seed: 1,
+        version: 1,
+        versionNonce: 1,
+        isDeleted: false,
+        boundElements: null,
+        updated: 1,
+        link: null,
+        locked: false,
+      } as any,
+      {
+        id: "text2",
+        type: "text",
+        x: 40,
+        y: 40,
+        width: 120,
+        height: 20,
+        angle: 0,
+        strokeColor: "#000000",
+        backgroundColor: "transparent",
+        fillStyle: "hachure",
+        strokeWidth: 1,
+        strokeStyle: "solid",
+        roughness: 1,
+        opacity: 100,
+        groupIds: [],
+        frameId: "frame2",
+        roundness: null,
+        seed: 1,
+        version: 1,
+        versionNonce: 1,
+        isDeleted: false,
+        boundElements: null,
+        updated: 1,
+        link: null,
+        locked: false,
+        fontSize: 20,
+        fontFamily: 1,
+        text: "World",
+        baseline: 17,
+        textAlign: "left",
+        verticalAlign: "top",
+      } as any,
+    ];
+
+    // Mock minimal appState
+    const appState: Partial<AppState> = {
+      viewBackgroundColor: "#ffffff",
+      exportBackground: true,
+      exportScale: 1,
+    };
+
+    // Export to SVG using Excalidraw's exportToSvg
+    const svg = await exportToSvg({
+      elements,
+      appState: appState as any,
+      files: null,
+      exportPadding: 10,
+    });
+
+    // Remove duplicate xmlns attribute that Excalidraw adds
+    svg.removeAttribute("xmlns");
+
+    // Verify the exported SVG structure
+    expect(svg.tagName).toBe("svg");
+    expect(svg.getAttribute("viewBox")).toBeTruthy();
+
+    // Apply our frame animations
+    const result = animateFrames(svg, elements, { startMs: 0 });
+
+    // Save SVG to file for debugging
+    const svgString = new XMLSerializer().serializeToString(svg);
+    const outputPath = path.join(__dirname, "test-output");
+    if (!fs.existsSync(outputPath)) {
+      fs.mkdirSync(outputPath, { recursive: true });
+    }
+    fs.writeFileSync(
+      path.join(outputPath, "animated-frames-from-excalidraw.svg"),
+      svgString
+    );
+
+    // Verify animations
+    // Excalidraw creates groups with transform and stroke-linecap attributes
+    const frameGroups = Array.from(svg.querySelectorAll("g[transform]")).filter(
+      (g) => g.getAttribute("stroke-linecap") === "round"
+    );
+    expect(frameGroups.length).toBe(2);
+
+    // Verify first frame animations
+    const firstGroup = frameGroups[0];
+    const firstGroupAnimations = firstGroup.querySelectorAll("animate");
+    expect(firstGroupAnimations.length).toBe(2); // fade-in and fade-out
+
+    const firstFadeIn = firstGroupAnimations[0];
+    expect(firstFadeIn.getAttribute("attributeName")).toBe("opacity");
+    expect(firstFadeIn.getAttribute("from")).toBe("0");
+    expect(firstFadeIn.getAttribute("to")).toBe("1");
+    expect(firstFadeIn.getAttribute("dur")).toBe("500ms");
+    expect(firstFadeIn.getAttribute("begin")).toBe("0ms");
+
+    const firstFadeOut = firstGroupAnimations[1];
+    expect(firstFadeOut.getAttribute("attributeName")).toBe("opacity");
+    expect(firstFadeOut.getAttribute("from")).toBe("1");
+    expect(firstFadeOut.getAttribute("to")).toBe("0");
+    expect(firstFadeOut.getAttribute("dur")).toBe("500ms");
+    expect(firstFadeOut.getAttribute("begin")).toBe("2000ms");
+
+    // Verify second frame animations
+    const secondGroup = frameGroups[1];
     const secondGroupAnimations = secondGroup.querySelectorAll("animate");
     expect(secondGroupAnimations.length).toBe(1); // only fade-in for last frame
 

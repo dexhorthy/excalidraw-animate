@@ -102,11 +102,18 @@ export const animateFrames = (
   const SVG_NS = "http://www.w3.org/2000/svg";
   const startMs = options.startMs ?? 0;
   const frameDuration = 2000;
-  const fadeTime = 500; // Time for fade in/out
+  const fadeTime = 500;
   const extraMargin = 1000;
 
-  // Get existing groups
-  const groups = Array.from(svg.querySelectorAll("g"));
+  // Get frame groups - Excalidraw puts frames in groups with stroke-linecap="round"
+  const svgFrameGroups = Array.from(
+    svg.querySelectorAll("g[transform]")
+  ).filter((g) => g.getAttribute("stroke-linecap") === "round");
+
+  // Get text groups - they're in separate g elements with text children
+  const svgTextGroups = Array.from(svg.querySelectorAll("g[transform]")).filter(
+    (g) => g.querySelector("text")
+  );
 
   // Map frames to their elements
   const frameMap = new Map<string, number[]>();
@@ -138,44 +145,52 @@ export const animateFrames = (
   }
 
   // Sort frames by their order of appearance
-  const frameGroups = Array.from(frameMap.entries()).sort(
+  const orderedFrames = Array.from(frameMap.entries()).sort(
     (a, b) => (orders.get(a[0]) ?? 0) - (orders.get(b[0]) ?? 0)
   );
 
   let current = startMs;
 
-  // Animate existing groups
-  frameGroups.forEach(([groupKey, indices], frameIndex) => {
+  // Animate frame groups
+  orderedFrames.forEach(([groupKey, indices], frameIndex) => {
     console.log("Processing frame group:", groupKey, "indices:", indices);
 
-    const group = groups[frameIndex];
-    if (!group) return;
+    const frameGroup = svgFrameGroups[frameIndex];
+    const textGroup = svgTextGroups[frameIndex];
+    if (!frameGroup || !textGroup) return;
 
-    group.setAttribute("opacity", "0");
+    frameGroup.setAttribute("opacity", "0");
+    textGroup.setAttribute("opacity", "0");
 
-    const isLastFrame = frameIndex === frameGroups.length - 1;
+    const isLastFrame = frameIndex === orderedFrames.length - 1;
 
-    // Create fade-in animation
-    const fadeIn = svg.ownerDocument.createElementNS(SVG_NS, "animate");
-    fadeIn.setAttribute("attributeName", "opacity");
-    fadeIn.setAttribute("from", "0");
-    fadeIn.setAttribute("to", "1");
-    fadeIn.setAttribute("dur", `${fadeTime}ms`);
-    fadeIn.setAttribute("begin", `${current}ms`);
-    fadeIn.setAttribute("fill", "freeze");
-    group.appendChild(fadeIn);
+    // Create fade-in animations
+    const frameFadeIn = svg.ownerDocument.createElementNS(SVG_NS, "animate");
+    frameFadeIn.setAttribute("attributeName", "opacity");
+    frameFadeIn.setAttribute("from", "0");
+    frameFadeIn.setAttribute("to", "1");
+    frameFadeIn.setAttribute("dur", `${fadeTime}ms`);
+    frameFadeIn.setAttribute("begin", `${current}ms`);
+    frameFadeIn.setAttribute("fill", "freeze");
+    frameGroup.appendChild(frameFadeIn);
+
+    const textFadeIn = frameFadeIn.cloneNode(true) as SVGElement;
+    textGroup.appendChild(textFadeIn);
 
     if (!isLastFrame) {
-      // Create fade-out animation
-      const fadeOut = svg.ownerDocument.createElementNS(SVG_NS, "animate");
-      fadeOut.setAttribute("attributeName", "opacity");
-      fadeOut.setAttribute("from", "1");
-      fadeOut.setAttribute("to", "0");
-      fadeOut.setAttribute("dur", `${fadeTime}ms`);
+      // Create fade-out animations
+      const frameFadeOut = svg.ownerDocument.createElementNS(SVG_NS, "animate");
+      frameFadeOut.setAttribute("attributeName", "opacity");
+      frameFadeOut.setAttribute("from", "1");
+      frameFadeOut.setAttribute("to", "0");
+      frameFadeOut.setAttribute("dur", `${fadeTime}ms`);
       // Start fading out when the next frame starts fading in
-      fadeOut.setAttribute("begin", `${current + frameDuration}ms`);
-      fadeOut.setAttribute("fill", "freeze");
-      group.appendChild(fadeOut);
+      frameFadeOut.setAttribute("begin", `${current + frameDuration}ms`);
+      frameFadeOut.setAttribute("fill", "freeze");
+      frameGroup.appendChild(frameFadeOut);
+
+      const textFadeOut = frameFadeOut.cloneNode(true) as SVGElement;
+      textGroup.appendChild(textFadeOut);
     }
 
     current += frameDuration;
