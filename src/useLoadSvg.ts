@@ -95,6 +95,31 @@ export const useLoadSvg = () => {
     (async () => {
       const hash = window.location.hash.slice(1);
       const searchParams = new URLSearchParams(hash);
+      
+      // Check for file path parameter
+      const filePath = searchParams.get("file");
+      if (filePath) {
+        try {
+          // Fetch the file from a local endpoint
+          const response = await fetch(`/api/load-file?path=${encodeURIComponent(filePath)}`);
+          if (response.ok) {
+            const fileData = await response.json();
+            const elements = restoreElements(fileData.elements || [], null);
+            const data = {
+              elements: getNonDeletedElements(elements),
+              appState: fileData.appState || {},
+              files: fileData.files || {}
+            };
+            const [{ svg, finishedMs }] = await loadDataList([data]);
+            if (searchParams.get("autoplay") === "no") {
+              svg.setCurrentTime(finishedMs);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading file:", error);
+        }
+      }
+      
       const matchIdKey = /([a-zA-Z0-9_-]+),?([a-zA-Z0-9_-]*)/.exec(
         searchParams.get("json") || ""
       );

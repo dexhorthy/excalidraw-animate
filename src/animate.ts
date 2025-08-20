@@ -650,9 +650,18 @@ export const animateSvg = (
   let finishedMs;
   const groups = createGroups(svg, elements);
   const finished = new Map();
+  
+  // Get speed multiplier from URL parameters
+  const hash = window.location.hash.slice(1);
+  const searchParams = new URLSearchParams(hash);
+  const speedMultiplier = parseFloat(searchParams.get("speed") || "1") || 1;
+  
+  // Apply speed multiplier (inverse because faster = shorter duration)
+  const speedFactor = 1 / speedMultiplier;
+  
   let current = options.startMs ?? 1000; // 1 sec margin
-  const groupDur = 5000;
-  const individualDur = 500;
+  const groupDur = 3000 * speedFactor;
+  const individualDur = 300 * speedFactor;
   const groupNodes = filterGroupNodes(svg.childNodes as NodeListOf<SVGElement>);
   if (groupNodes.length !== elements.length) {
     throw new Error("element length mismatch");
@@ -669,16 +678,16 @@ export const animateSvg = (
       if (groupIds.length >= 1) {
         const groupId = groupIds[0];
         const group = groups[groupId];
-        const dur =
-          extractNumberFromElement(element, "animateDuration") ||
+        const baseDur = extractNumberFromElement(element, "animateDuration") || 
           groupDur / (group.length + 1);
+        const dur = baseDur * speedFactor;
         patchSvgEle(svg, ele, element, current, dur, options);
         current += dur;
         finished.set(ele, true);
         group.forEach(([childEle, childIndex]) => {
-          const dur =
-            extractNumberFromElement(elements[childIndex], "animateDuration") ||
+          const baseDur = extractNumberFromElement(elements[childIndex], "animateDuration") ||
             groupDur / (group.length + 1);
+          const dur = baseDur * speedFactor;
           if (!finished.has(childEle)) {
             patchSvgEle(
               svg,
@@ -694,8 +703,8 @@ export const animateSvg = (
         });
         delete groups[groupId];
       } else {
-        const dur =
-          extractNumberFromElement(element, "animateDuration") || individualDur;
+        const baseDur = extractNumberFromElement(element, "animateDuration") || individualDur;
+        const dur = baseDur * speedFactor;
         patchSvgEle(svg, ele, element, current, dur, options);
         current += dur;
         finished.set(ele, true);

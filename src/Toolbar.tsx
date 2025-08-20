@@ -11,7 +11,6 @@ import type { BinaryFiles } from "@excalidraw/excalidraw/types/types";
 import type { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types";
 
 import "./Toolbar.css";
-import GitHubCorner from "./GitHubCorner";
 import { getBeginTimeList } from "./animate";
 import { exportToSvgFile, exportToWebmFile, prepareWebmData } from "./export";
 import { getNonDeletedElements } from "./useLoadSvg";
@@ -72,10 +71,10 @@ const Toolbar: React.FC<Props> = ({ svgList, loadDataList }) => {
   useEffect(() => {
     const hash = window.location.hash.slice(1);
     const searchParams = new URLSearchParams(hash);
-    if (searchParams.get("toolbar") !== "no") {
-      setShowToolbar(true);
-    } else {
+    if (searchParams.get("headless") === "true" || searchParams.get("toolbar") === "no") {
       setShowToolbar("never");
+    } else {
+      setShowToolbar(true);
     }
   }, []);
 
@@ -260,10 +259,6 @@ const Toolbar: React.FC<Props> = ({ svgList, loadDataList }) => {
           </button>
         </div>
       )}
-      <GitHubCorner
-        link="https://github.com/dai-shi/excalidraw-animate"
-        size={40}
-      />
     </div>
   );
 };

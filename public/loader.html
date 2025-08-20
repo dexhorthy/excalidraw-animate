@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excalidraw Animate Loader</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Get excalidraw data from URL parameter
+      const params = new URLSearchParams(window.location.search);
+      const dataParam = params.get('data');
+      
+      if (dataParam) {
+        try {
+          // Store data in sessionStorage for the app to pick up
+          sessionStorage.setItem('excalidrawData', dataParam);
+          // Redirect to main app
+          window.location.href = '/';
+        } catch (e) {
+          document.body.innerHTML = 'Error loading data: ' + e.message;
+        }
+      } else {
+        document.body.innerHTML = 'No data provided';
+      }
+    </script>
+  </body>
+</html>
