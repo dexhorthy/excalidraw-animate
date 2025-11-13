@@ -9,7 +9,7 @@ const args = process.argv.slice(2);
 let sourceFile;
 let outputFile;
 let outputType = 'webm'; // webm or svg
-let port = 5173;
+let port = 5174;
 let speed = 1; // Animation speed multiplier
 
 for (let i = 0; i < args.length; i++) {
@@ -117,11 +117,11 @@ async function isServerRunning(port) {
     });
 
     const context = await browser.newContext({
-      viewport: { width: 1280, height: 720 },
+      viewport: { width: 1920, height: 1080 },
       ...(outputType === 'webm' && {
         recordVideo: {
           dir: path.dirname(outputFile),
-          size: { width: 1280, height: 720 }
+          size: { width: 1920, height: 1080 }
         }
       })
     });

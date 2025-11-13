@@ -6,6 +6,9 @@ import path from "path";
 
 export default defineConfig({
   base: process.env.NODE_ENV === 'production' ? "/excalidraw-animate/" : "/",
+  server: {
+    port: 5174,
+  },
   plugins: [
     react(),
     {
