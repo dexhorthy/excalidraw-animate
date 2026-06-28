@@ -6,12 +6,12 @@ import {
   loadLibraryFromBlob,
 } from "@excalidraw/excalidraw";
 
-import type { BinaryFiles } from "@excalidraw/excalidraw/types/types";
+import type { BinaryFiles } from "@excalidraw/excalidraw/types";
 import type {
   ExcalidrawElement,
   ExcalidrawTextElement,
   NonDeletedExcalidrawElement,
-} from "@excalidraw/excalidraw/types/element/types";
+} from "@excalidraw/excalidraw/element/types";
 
 import { loadScene } from "./vendor/loadScene";
 import { animateSvg } from "./animate";

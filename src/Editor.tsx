@@ -1,6 +1,8 @@
 import React from "react";
 
 import { Excalidraw } from "@excalidraw/excalidraw";
+// 0.18+ no longer auto-injects its stylesheet — consumers must import it.
+import "@excalidraw/excalidraw/index.css";
 
 // Default font for new text in the editor.
 // 1 = Hand-drawn (Virgil), 2 = Normal (Helvetica), 3 = Code (Cascadia / monospace).
