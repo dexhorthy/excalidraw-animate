@@ -9,7 +9,7 @@ const args = process.argv.slice(2);
 let sourceFile;
 let outputFile;
 let outputType = 'webm'; // webm or svg
-let port = 5174;
+let port = 5200;
 let speed = 1; // Animation speed multiplier
 
 for (let i = 0; i < args.length; i++) {

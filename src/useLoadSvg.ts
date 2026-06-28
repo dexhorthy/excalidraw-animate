@@ -193,6 +193,7 @@ function applyNewFontsToSvg(svg: SVGSVGElement, elements: ExcalidrawElement[]) {
     } else {
       // Fallback to default font if no matching element found
       svgText.setAttribute("font-family", DEFAULT_FONT);
+      svgText.setAttribute("font-weight", "bold");
     }
   });
 }
@@ -204,4 +205,5 @@ function convertFontFamily(
   // Remove any existing font-family attribute
   textElement.removeAttribute("font-family");
   textElement.setAttribute("font-family", DEFAULT_FONT);
+  textElement.setAttribute("font-weight", "bold");
 }
